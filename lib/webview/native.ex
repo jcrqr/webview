@@ -22,7 +22,7 @@ defmodule WebView.Native do
   @doc """
   Calls the loop function, either blocking or non-blocking.
   """
-  @spec loop(boolean()) :: :ok
+  @spec loop(Integer.t()) :: :ok
   def loop(blocking)
   def loop(_), do: not_loaded()
 
@@ -36,7 +36,7 @@ defmodule WebView.Native do
   @doc """
   Toggles `WebView` fullscreen.
   """
-  @spec set_fullscreen(boolean()) :: :ok
+  @spec set_fullscreen(Integer.t()) :: :ok
   def set_fullscreen(fullscreen)
   def set_fullscreen(_), do: not_loaded()
 

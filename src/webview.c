@@ -10,6 +10,7 @@ typedef struct
     struct webview*     w;
     ERL_NIF_TERM        atom_ok;
     ERL_NIF_TERM        atom_error;
+    ERL_NIF_TERM        atom_stop;
 } state_t;
 
 // load
@@ -20,8 +21,10 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     state_t* state = (state_t*) enif_alloc(sizeof(state_t));
     if(state == NULL) return -1;
 
+    state->w = (struct webview*) enif_alloc(sizeof(struct webview));
     state->atom_ok = enif_make_atom(env, "ok");
     state->atom_error = enif_make_atom(env, "error");
+    state->atom_stop = enif_make_atom(env, "stop");
 
     *priv = (void*) state;
 
@@ -35,6 +38,7 @@ unload(ErlNifEnv* env, void* priv)
 {
     state_t* state = (state_t*) priv;
 
+    enif_free(state->w);
     enif_free(state);
 }
 
@@ -45,17 +49,16 @@ static ERL_NIF_TERM
 create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     state_t* state = (state_t*) enif_priv_data(env);
-    struct webview *w = (struct webview *) calloc(1, sizeof(*w));
 
     // get arguments
-    ErlNifBinary title, url;
+    ErlNifBinary title_bin, url_bin;
     int resizable, debug, width, height;
 
-    if (enif_inspect_binary(env, argv[0], &title) == 0) {
+    if (enif_inspect_binary(env, argv[0], &title_bin) == 0) {
         return enif_make_badarg(env);
     }
 
-    if (enif_inspect_binary(env, argv[1], &url) == 0) {
+    if (enif_inspect_binary(env, argv[1], &url_bin) == 0) {
         return enif_make_badarg(env);
     }
 
@@ -75,26 +78,35 @@ create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    // setup webview
-    w->title = title.data;
-    w->url = url.data;
-    w->width = width;
-    w->height = height;
-    w->resizable = resizable;
-    w->debug = debug;
+    // make local copy of title and url
+    const char *title = strndup((char*) title_bin.data, title_bin.size);
+    const char *url = strndup((char*) url_bin.data, url_bin.size);
 
-    // release unecessary binaries
-    enif_release_binary(&title);
-    enif_release_binary(&url);
+    // setup webview
+    state->w->title = title;
+    state->w->url = url;
+    state->w->width = width;
+    state->w->height = height;
+    state->w->resizable = resizable;
+    state->w->debug = debug;
+
+    webview_debug("title: %s", state->w->title);
+    webview_debug("url: %s", state->w->url);
 
     // init the webview
-    if (webview_init(w) != 0) {
-        enif_free(w);
+    if (webview_init(state->w) != 0) {
+        enif_free(state->w);
 
         return state->atom_error;
     }
 
-    state->w = w;
+    // free binaries
+    enif_release_binary(&title_bin);
+    enif_release_binary(&url_bin);
+
+    // free local copies
+    free(title);
+    free(url);
 
     return state->atom_ok;
 }
@@ -108,7 +120,7 @@ loop(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     state_t* state = (state_t*) enif_priv_data(env);
 
-    // parse argument
+    // get argument
     int blocking;
 
     if (enif_get_int(env, argv[0], &blocking) == 0) {
@@ -116,32 +128,40 @@ loop(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     // loop
-    webview_loop(state->w, blocking);
-
-    return state->atom_ok;
+    if (webview_loop(state->w, blocking) == 0) {
+      return state->atom_ok;
+    }
+    else {
+      return state->atom_stop;
+    }
 }
 
 // set_title
 // Sets the webview title. Accepts a `title` argument that must be an Erlang binary.
 // Implements the `webview_loop` function.
-// TODO: this function should return the result of `webview_loop`.
 static ERL_NIF_TERM
 set_title(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     state_t* state = (state_t*) enif_priv_data(env);
 
-    // parse argument
+    // get argument
     ErlNifBinary title_bin;
 
     if (enif_inspect_binary(env, argv[0], &title_bin) == 0) {
         return enif_make_badarg(env);
     }
 
+    // make local copy of title
+    const char *title = strndup((char*) title_bin.data, title_bin.size);
+
     // set the title
-    webview_set_title(state->w, title_bin.data);
+    webview_set_title(state->w, title);
 
     // release the title binary
     enif_release_binary(&title_bin);
+
+    // free local copy
+    free(title);
 
     return state->atom_ok;
 }
@@ -183,7 +203,7 @@ eval(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     // evaluate JS
-    webview_eval(state->w, js_bin.data);
+    webview_eval(state->w, (const char*) js_bin.data);
 
     // release the binary
     enif_release_binary(&js_bin);
@@ -206,7 +226,7 @@ inject_css(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    webview_inject_css(state->w, css_bin.data);
+    webview_inject_css(state->w, (const char*) css_bin.data);
 
     enif_release_binary(&css_bin);
 
@@ -215,12 +235,12 @@ inject_css(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 // Initialize the NIF
 static ErlNifFunc nif_funcs[] = {
-    {"create", 6, create},
-    {"loop", 1, loop},
-    {"set_title", 1, set_title},
-    {"set_fullscreen", 1, set_fullscreen},
-    {"eval", 1, eval},
-    {"inject_css", 1, inject_css},
+    {"create", 6, create, 0},
+    {"loop", 1, loop, 0},
+    {"set_title", 1, set_title, 0},
+    {"set_fullscreen", 1, set_fullscreen, 0},
+    {"eval", 1, eval, 0},
+    {"inject_css", 1, inject_css, 0},
 };
 
 ERL_NIF_INIT(Elixir.WebView.Native, nif_funcs, &load, NULL, NULL, &unload)

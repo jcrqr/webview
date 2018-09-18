@@ -1,20 +1,12 @@
 defmodule WebView do
   @moduledoc """
   WebView API
-
-  ## Options
-
-  * `title` - string. Default is `"WebView"`
-  * `url` - string. Default is `"https://elixir-lang.org"`
-  * `width` - int. Default is `800`
-  * `height` - int. Default is `600`
-  * `resizable` - bool. Makes the window resizable. Default is `true`
-  * `debug` - bool. Enables debugging (developer tools). Default is `true`
   """
 
   use GenServer
 
   alias WebView.Native
+  alias WebView.Settings
 
   @doc """
   Returns a specification to start `WebView` under a supervisor.
@@ -31,7 +23,8 @@ defmodule WebView do
   end
 
   @doc """
-  Starts the `WebView`.
+  Starts the `WebView`. For a list of available options check the
+  `WebView.Settings` documentation.
   """
   def start(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -59,22 +52,15 @@ defmodule WebView do
   end
 
   @doc """
-  Invoked when `WebView` is started. Initalizes the actual `webview` and
-  dispatches a message to start the loop.
+  Invoked when `WebView` is started. Initializes the actual `webview` and
+  then starts the loop.
   """
   def init(opts \\ []) do
-    title = Keyword.get(opts, :title, "WebView")
-    url = Keyword.get(opts, :url, "https://elixir-lang.org")
-    width = Keyword.get(opts, :width, 800)
-    height = Keyword.get(opts, :height, 600)
-    resizable = if Keyword.get(opts, :resizable, true), do: 1, else: 0
-    debug = if Keyword.get(opts, :debug, true), do: 1, else: 0
+    settings = struct!(Settings, opts)
 
-    :ok = Native.create(title, url, width, height, resizable, debug)
+    send(self(), :create)
 
-    Process.send_after(self(), :loop, 10)
-
-    {:ok, nil}
+    {:ok, %{settings: settings, created?: false, running?: false}}
   end
 
   @doc false
@@ -106,10 +92,29 @@ defmodule WebView do
 
   @doc false
   def handle_info(:loop, state) do
-    :ok = Native.loop(0)
+    running? =
+      case Native.loop(0) do
+        :ok ->
+          send(self(), :loop)
+          true
 
-    send(self(), :loop)
+        :stop ->
+          false
+      end
+
+    {:noreply, %{state | running?: running?}}
+  end
+
+  def handle_info(:create, %{created?: true} = state), do: {:noreply, state}
+
+  def handle_info(:create, %{settings: %Settings{size: {w, h}} = s} = state) do
+    :ok = Native.create(s.title, s.url, w, h, bool_to_int(s.resizable), bool_to_int(s.debug))
+
+    Process.send_after(self(), :loop, 10)
 
     {:noreply, state}
   end
+
+  defp bool_to_int(true), do: 1
+  defp bool_to_int(false), do: 0
 end
