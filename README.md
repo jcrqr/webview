@@ -1,6 +1,6 @@
 # WebView
 
-[Installation](#installation) | [Documentation](#usage) | [License](#license)
+[Installation](#installation) | [Usage](#usage) | [Documentation](#documentation) | [License](#license)
 
 > Build cross platform desktop apps with Elixir and web technologies.
 
@@ -38,8 +38,62 @@ Will be published on [Hex](https://hex.pm) when `0.1.0` is released.
 
 ## Usage
 
-For usage information, please check the [examples](https://github.com/und0ck3d/webview/blob/master/examples)
-provided for now.
+**Starting WebView**
+
+```console
+iex> opts = [title: "Hello, WebView!", url: "https://elixir-lang.org"]
+iex> WebView.start(opts)
+```
+
+Alternatively you may add `WebView` to a supervision tree:
+
+```elixir
+webview_config = [title: "Hello, WebView!", url: "https://elixir-lang.org"]
+
+children = [
+  {WebView, webview_config}
+]
+```
+
+**Manipulating WebView**
+
+(after having started `WebView`)
+
+Set the title:
+
+```elixir
+WebView.set_title("Elixir is awesome!")
+```
+
+Set fullscreen:
+
+```elixir
+WebView.set_fullscreen(true) # Turns fullscreen on
+WebView.set_fullscreen(false) # Turns fullscreen off
+```
+
+Evaluate JavaScript code:
+
+```elixir
+WebView.eval("console.log('Hi, from Elixir!')")
+```
+
+Injectg CSS styles:
+
+```elixir
+WebView.inject_css("body { background: #000; color: #fff; }")
+```
+
+Currently it isn't possible to update neither the page's URL nor the HTML directly
+using [zserge/webview](https://github.com/zserge/webview) because the library
+doesn't have support for it. Those and other additional features will be added
+to WebView in the future to easily allow different use cases (such as update the
+HTML directly, implement navigation on back-end, use a web server such as Phoenix,
+SPAs and more).
+
+For more examples, please check the [examples](https://github.com/und0ck3d/webview/blob/master/examples) directory.
+
+## Documentation
 
 Documentation isn't available online. You can generate it locally with:
 

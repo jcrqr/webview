@@ -52,6 +52,13 @@ defmodule WebView do
   end
 
   @doc """
+  Injects CSS.
+  """
+  def inject_css(css, timeout \\ 1000) do
+    GenServer.call(__MODULE__, {:css, css}, timeout)
+  end
+
+  @doc """
   Invoked when `WebView` is started. Initializes the actual `webview` and
   then starts the loop.
   """
