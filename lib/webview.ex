@@ -1,6 +1,15 @@
 defmodule WebView do
   @moduledoc """
   WebView API
+
+  ## Options
+
+  * `title` - string. Default is `"WebView"`
+  * `url` - string. Default is `"https://elixir-lang.org"`
+  * `width` - int. Default is `800`
+  * `height` - int. Default is `600`
+  * `resizable` - bool. Makes the window resizable. Default is `true`
+  * `debug` - bool. Enables debugging (developer tools). Default is `true`
   """
 
   use GenServer
