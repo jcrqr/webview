@@ -17,6 +17,20 @@ defmodule WebView do
   alias WebView.Native
 
   @doc """
+  Returns a specification to start `WebView` under a supervisor.
+
+  See `Supervisor`.
+  """
+  def child_spec(arg) do
+    spec = %{
+      id: __MODULE__,
+      start: {__MODULE__, :start, [arg]}
+    }
+
+    Supervisor.child_spec(spec, [])
+  end
+
+  @doc """
   Starts the `WebView`.
   """
   def start(opts \\ []) do
@@ -58,7 +72,7 @@ defmodule WebView do
 
     :ok = Native.create(title, url, width, height, resizable, debug)
 
-    Process.send_after(self(), :loop, 1000)
+    Process.send_after(self(), :loop, 10)
 
     {:ok, nil}
   end
@@ -92,7 +106,7 @@ defmodule WebView do
 
   @doc false
   def handle_info(:loop, state) do
-    Native.loop(0)
+    :ok = Native.loop(0)
 
     send(self(), :loop)
 
