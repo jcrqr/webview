@@ -17,6 +17,9 @@ It's recommended to also read the [webview readme](https://github.com/Boscop/web
 for a better understanding of how the library works behind the scenes. You'll also
 find a list of bindings in other languages there.
 
+**Disclaimer:** this is work in progress (early development) and breaking changes
+will most probably occur without notice, currently **not** production-ready.
+
 ## Installation
 
 WebView can be installed by adding `webview` to your list of dependencies in `mix.exs`:
