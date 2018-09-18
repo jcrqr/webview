@@ -1,4 +1,6 @@
 defmodule WebView do
+  @moduledoc false
+
   use GenServer
 
   alias WebView.Native
