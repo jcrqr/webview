@@ -28,7 +28,8 @@ defmodule WebView.MixProject do
   defp deps do
     [
       {:elixir_make, "~> 0.4"},
-      {:ex_doc, "~> 0.19", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
