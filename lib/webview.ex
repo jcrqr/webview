@@ -1,26 +1,44 @@
 defmodule WebView do
-  @moduledoc false
+  @moduledoc """
+  WebView API
+  """
 
   use GenServer
 
   alias WebView.Native
 
+  @doc """
+  Starts the `WebView`.
+  """
   def start(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def set_title(title, timeout \\ 5000) do
+  @doc """
+  Sets the `WebView` title.
+  """
+  def set_title(title, timeout \\ 1000) do
     GenServer.call(__MODULE__, {:set_title, title}, timeout)
   end
 
-  def set_fullscreen(fullscreen \\ true, timeout \\ 5000) do
+  @doc """
+  Sets the `WebView` fullscreen on/off.
+  """
+  def set_fullscreen(fullscreen \\ true, timeout \\ 1000) do
     GenServer.call(__MODULE__, {:set_fullscreen, fullscreen}, timeout)
   end
 
-  def eval(js, timeout \\ 5000) do
+  @doc """
+  Evaluates JavaScript code.
+  """
+  def eval(js, timeout \\ 1000) do
     GenServer.call(__MODULE__, {:eval, js}, timeout)
   end
 
+  @doc """
+  Invoked when `WebView` is started. Initalizes the actual `webview` and
+  dispatches a message to start the loop.
+  """
   def init(opts \\ []) do
     title = Keyword.get(opts, :title, "WebView")
     url = Keyword.get(opts, :url, "https://elixir-lang.org")
@@ -36,6 +54,7 @@ defmodule WebView do
     {:ok, nil}
   end
 
+  @doc false
   def handle_call({:set_title, title}, _, state) do
     Native.set_title(title)
 
@@ -62,6 +81,7 @@ defmodule WebView do
     {:reply, :ok, state}
   end
 
+  @doc false
   def handle_info(:loop, state) do
     Native.loop(0)
 

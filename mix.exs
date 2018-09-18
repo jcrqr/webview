@@ -9,7 +9,7 @@ defmodule WebView.MixProject do
       start_permanent: Mix.env() == :prod,
       compilers: [:elixir_make] ++ Mix.compilers(),
       deps: deps(),
-      name: "WebView",
+      name: "webview",
       source_url: "https://github.com/und0ck3d/webview",
       homepage_url: "https://github.com/und0ck3d/webview",
       docs: [
