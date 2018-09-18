@@ -36,32 +36,32 @@ static ERL_NIF_TERM
 create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     state_t* state = (state_t*) enif_priv_data(env);
-  	struct webview *w = (struct webview *) calloc(1, sizeof(*w));
+    struct webview *w = (struct webview *) calloc(1, sizeof(*w));
     ErlNifBinary title, url;
     int resizable, debug, width, height;
 
     if (enif_inspect_binary(env, argv[0], &title) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     if (enif_inspect_binary(env, argv[1], &url) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     if (enif_get_int(env, argv[2], &width) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     if (enif_get_int(env, argv[3], &height) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     if (enif_get_int(env, argv[4], &resizable) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     if (enif_get_int(env, argv[5], &debug) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     w->title = title.data;
@@ -75,9 +75,9 @@ create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_release_binary(&url);
 
     if (webview_init(w) != 0) {
-      enif_free(w);
+        enif_free(w);
 
-      return state->atom_error;
+        return state->atom_error;
     }
 
     state->w = w;
@@ -92,7 +92,7 @@ loop(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     int blocking;
 
     if (enif_get_int(env, argv[0], &blocking) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     webview_loop(state->w, blocking);
@@ -107,7 +107,7 @@ set_title(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ErlNifBinary title_bin;
 
     if (enif_inspect_binary(env, argv[0], &title_bin) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     webview_set_title(state->w, title_bin.data);
@@ -124,7 +124,7 @@ set_fullscreen(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     int fullscreen;
 
     if (enif_get_int(env, argv[0], &fullscreen) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     webview_set_fullscreen(state->w, fullscreen);
@@ -139,7 +139,7 @@ eval(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ErlNifBinary js_bin;
 
     if (enif_inspect_binary(env, argv[0], &js_bin) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     webview_eval(state->w, js_bin.data);
@@ -156,7 +156,7 @@ inject_css(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ErlNifBinary css_bin;
 
     if (enif_inspect_binary(env, argv[0], &css_bin) == 0) {
-      return enif_make_badarg(env);
+        return enif_make_badarg(env);
     }
 
     webview_inject_css(state->w, css_bin.data);
