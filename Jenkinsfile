@@ -8,7 +8,7 @@ pipeline {
     }
     stage('marco is') {
       steps {
-        sh 'Marco is Gay'
+        sh 'echo \'Marco is Gay\''
       }
     }
   }
